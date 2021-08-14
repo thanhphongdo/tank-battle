@@ -13,6 +13,7 @@ export class BaseObject {
     from: PositionInterface
     to: PositionInterface
     speed: number;
+    autoChangeDirection: boolean = true;
     constructor(gameApp: PIXI.Application, sprite: PIXI.Sprite) {
         this.gameApp = gameApp;
         this.sprite = sprite;
@@ -43,22 +44,19 @@ export class BaseObject {
         return Math.sqrt(Math.pow(from.x - to.x, 2) + Math.pow(from.y - to.y, 2));
     }
 
-    vectorAngle(vector: PositionInterface) {
+    vector(from: PositionInterface, to: PositionInterface) {
+        return {
+            x: to.x - from.x,
+            y: to.y - from.y
+        }
+    }
+
+    vectorAngle(from: PositionInterface, to: PositionInterface) {
+        const vector = this.vector(from, to);
+        let addPI = false;
         const rootVector: PositionInterface = {
             x: 1,
             y: 0
-        }
-        const cosin =
-            ((vector.x * rootVector.x) + (vector.y * rootVector.y)) /
-            (Math.sqrt(((Math.pow(vector.x, 2) + Math.pow(vector.y, 2))) * Math.sqrt(Math.pow(rootVector.x, 2) + Math.pow(rootVector.y, 2))));
-        return Math.acos(cosin);
-    }
-
-    getAngleByVector(from: PositionInterface, to: PositionInterface){
-        let addPI = false;
-        const vector = {
-            x: this.to.x - this.from.x,
-            y: this.to.y - this.from.y
         }
         if (vector.x < 0 && vector.y < 0) {
             vector.x = -vector.x;
@@ -70,16 +68,19 @@ export class BaseObject {
             vector.y = -vector.y;
             addPI = true;
         }
-
-        const distance = this.distance(this.from, this.to);
-        let angle = this.vectorAngle(vector);
+        const cosin =
+            ((vector.x * rootVector.x) + (vector.y * rootVector.y)) /
+            (Math.sqrt(((Math.pow(vector.x, 2) + Math.pow(vector.y, 2))) * Math.sqrt(Math.pow(rootVector.x, 2) + Math.pow(rootVector.y, 2))));
+        let angle = Math.acos(cosin);
         if (addPI) {
             angle += Math.PI;
         }
+        return angle;
     }
 
-    rotate(angle: number) {
-        this.sprite.rotation = angle;
+    rotate(from: PositionInterface, to: PositionInterface) {
+        const angle = this.vectorAngle(from, to);
+        this.sprite.rotation = angle + Math.PI / 2;
     }
 
     move(from: PositionInterface, to: PositionInterface, speed: number) {
@@ -87,42 +88,27 @@ export class BaseObject {
         this.from = from;
         this.to = to;
         this.speed = speed;
-        const vector = {
-            x: this.to.x - this.from.x,
-            y: this.to.y - this.from.y
-        }
     }
 
     changePosition() {
         if (this.from.x == this.to.x && this.from.y == this.from.y) {
             return;
         }
-        let addPI = false;
+
         const vector = {
             x: this.to.x - this.from.x,
             y: this.to.y - this.from.y
         }
-        if (vector.x < 0 && vector.y < 0) {
-            vector.x = -vector.x;
-            vector.y = -vector.y;
-            addPI = true;
-        }
-        if (vector.x > 0 && vector.y < 0) {
-            vector.x = -vector.x;
-            vector.y = -vector.y;
-            addPI = true;
-        }
 
+        let angle = this.vectorAngle(this.from, this.to);
         const distance = this.distance(this.from, this.to);
-        let angle = this.vectorAngle(vector);
-        if (addPI) {
-            angle += Math.PI;
-        }
         const vx = Math.cos(angle) * this.speed / 60.0;
         const vy = Math.sin(angle) * this.speed / 60.0;
-        // this.sprite.rotation = angle + Math.PI / 2;
-        this.rotate(angle + Math.PI / 2);
+        // this.rotate(angle + Math.PI / 2);
         if (!this.stop) {
+            if (this.autoChangeDirection) {
+                this.sprite.rotation = angle + Math.PI / 2;
+            }
             this.sprite.x += vx;
             this.sprite.y += vy;
         }
