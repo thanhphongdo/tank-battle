@@ -9,7 +9,7 @@ export class TankBody extends BaseObject {
     init(position: PositionInterface) {
         this.sprite.x = position.x;
         this.sprite.y = position.y;
-        this.sprite.texture.baseTexture.setResolution(8);
+        this.scale(1 / 8);
         this.sprite.anchor.x = 0.5;
         this.sprite.anchor.y = 0.5;
         this.gameApp.stage.addChild(this.sprite);

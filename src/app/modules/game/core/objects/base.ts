@@ -7,18 +7,20 @@ export interface PositionInterface {
 
 export class BaseObject {
     gameApp: PIXI.Application
-    sprite: PIXI.Sprite;
+    sprite: PIXI.Sprite | PIXI.AnimatedSprite;
     ticker: PIXI.Ticker;
     stop: boolean = true;
     from: PositionInterface
     to: PositionInterface
     speed: number;
     autoChangeDirection: boolean = true;
+    currentAngle: number = 0;
+    stopCallback: Function;
     constructor(gameApp: PIXI.Application, sprite: PIXI.Sprite) {
         this.gameApp = gameApp;
         this.sprite = sprite;
-        this.ticker = PIXI.Ticker.shared;
-
+        // this.ticker = PIXI.Ticker.shared;
+        this.ticker = new PIXI.Ticker();
         this.from = this.position;
         this.to = this.position;
         this.speed = 100;
@@ -29,6 +31,10 @@ export class BaseObject {
                 this.sprite.x = this.to.x;
                 this.sprite.y = this.to.y;
                 this.stop = true;
+                this.ticker.stop();
+                if (this.stopCallback) {
+                    this.stopCallback();
+                }
             }
         });
     }
@@ -79,11 +85,17 @@ export class BaseObject {
     }
 
     rotate(from: PositionInterface, to: PositionInterface) {
-        const angle = this.vectorAngle(from, to);
-        this.sprite.rotation = angle + Math.PI / 2;
+        this.currentAngle = this.vectorAngle(from, to);
+        this.sprite.rotation = this.currentAngle + Math.PI / 2;
+    }
+
+    scale(value: number) {
+        this.sprite.scale.x = value;
+        this.sprite.scale.y = value;
     }
 
     move(from: PositionInterface, to: PositionInterface, speed: number) {
+        this.ticker.start();
         this.stop = false;
         this.from = from;
         this.to = to;
@@ -91,6 +103,9 @@ export class BaseObject {
     }
 
     changePosition() {
+        if (this.stop) {
+            return;
+        }
         if (this.from.x == this.to.x && this.from.y == this.from.y) {
             return;
         }
@@ -100,22 +115,27 @@ export class BaseObject {
             y: this.to.y - this.from.y
         }
 
-        let angle = this.vectorAngle(this.from, this.to);
+        this.currentAngle = this.vectorAngle(this.from, this.to);
         const distance = this.distance(this.from, this.to);
-        const vx = Math.cos(angle) * this.speed / 60.0;
-        const vy = Math.sin(angle) * this.speed / 60.0;
+        const vx = Math.cos(this.currentAngle) * this.speed / 60.0;
+        const vy = Math.sin(this.currentAngle) * this.speed / 60.0;
         // this.rotate(angle + Math.PI / 2);
         if (!this.stop) {
             if (this.autoChangeDirection) {
-                this.sprite.rotation = angle + Math.PI / 2;
+                this.sprite.rotation = this.currentAngle + Math.PI / 2;
             }
             this.sprite.x += vx;
             this.sprite.y += vy;
         }
 
         return {
-            angle,
+            angle: this.currentAngle,
             distance
         }
+    }
+
+    destroy() {
+        this.sprite.destroy();
+        this.ticker.destroy();
     }
 }

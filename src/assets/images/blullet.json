@@ -1,0 +1,51 @@
+{"frames": {
+
+"blullet-0.png":
+{
+	"frame": {"x":0,"y":0,"w":90,"h":40},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":90,"h":40},
+	"sourceSize": {"w":90,"h":40},
+	"anchor": {"x":0.5,"y":0.5}
+},
+"blullet-1.png":
+{
+	"frame": {"x":90,"y":0,"w":90,"h":40},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":90,"h":40},
+	"sourceSize": {"w":90,"h":40},
+	"anchor": {"x":0.5,"y":0.5}
+},
+"blullet-2.png":
+{
+	"frame": {"x":180,"y":0,"w":90,"h":40},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":90,"h":40},
+	"sourceSize": {"w":90,"h":40},
+	"anchor": {"x":0.5,"y":0.5}
+},
+"blullet-3.png":
+{
+	"frame": {"x":270,"y":0,"w":90,"h":40},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":90,"h":40},
+	"sourceSize": {"w":90,"h":40},
+	"anchor": {"x":0.5,"y":0.5}
+}},
+"animations": {
+	"blullet": ["blullet-0.png","blullet-1.png","blullet-2.png","blullet-3.png"]
+},
+"meta": {
+	"app": "https://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "blullet.png",
+	"format": "RGBA8888",
+	"size": {"w":360,"h":40},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:e75126d31ac45ae48c15b08794830198:178dc881ee328fe9bec496a33c74b901:9d953b65607366c5c4e0d2757637d55c$"
+}
+}
