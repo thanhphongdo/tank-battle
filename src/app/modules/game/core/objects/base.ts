@@ -1,5 +1,8 @@
 import * as PIXI from 'pixi.js';
+import { GameApplication } from '..';
 import * as Utils from '../utils';
+import { Bump } from './bump';
+const bumb = new Bump(PIXI);
 
 export interface PositionInterface {
     x: number;
@@ -7,7 +10,7 @@ export interface PositionInterface {
 }
 
 export class BaseObject {
-    gameApp: PIXI.Application
+    gameApp: GameApplication
     sprite: PIXI.Sprite | PIXI.AnimatedSprite;
     ticker: PIXI.Ticker;
     isStop: boolean = true;
@@ -17,10 +20,10 @@ export class BaseObject {
     autoChangeDirection: boolean = true;
     currentAngle: number = 0;
     stopCallback: Function;
-    eventUUID: string;
+    uuid: string;
     distanceDelta: number;
-    constructor(gameApp: PIXI.Application, sprite: PIXI.Sprite) {
-        this.eventUUID = `e_${Utils.uuid(20)}`;
+    constructor(gameApp: GameApplication, sprite: PIXI.Sprite) {
+        this.uuid = `obj_${Utils.uuid(32)}`;
         this.gameApp = gameApp;
         this.sprite = sprite;
         this.ticker = new PIXI.Ticker();
@@ -139,6 +142,13 @@ export class BaseObject {
             angle,
             distance
         }
+    }
+
+    collision(obj: Array<BaseObject>) {
+        return obj.filter(item => {
+            return bumb.hit(this.sprite, item.sprite, true, false, true);
+        });
+
     }
 
     destroy() {

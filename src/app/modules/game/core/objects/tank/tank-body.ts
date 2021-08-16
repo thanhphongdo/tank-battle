@@ -1,8 +1,9 @@
 import * as PIXI from 'pixi.js';
+import { GameApplication } from '../..';
 import { BaseObject, PositionInterface } from '../base';
 
 export class TankBody extends BaseObject {
-    constructor(gameApp: PIXI.Application, sprite: PIXI.Sprite) {
+    constructor(gameApp: GameApplication, sprite: PIXI.Sprite) {
         super(gameApp, sprite);
     }
 
@@ -12,6 +13,6 @@ export class TankBody extends BaseObject {
         this.scale(1 / 8);
         this.sprite.anchor.x = 0.5;
         this.sprite.anchor.y = 0.5;
-        this.gameApp.stage.addChild(this.sprite);
+        this.gameApp.app.stage.addChild(this.sprite);
     }
 }

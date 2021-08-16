@@ -1,10 +1,11 @@
 import * as PIXI from 'pixi.js';
+import { GameApplication } from '../..';
 import { BaseObject, PositionInterface } from '../base';
 import { TankBody } from './tank-body';
 
 export class TankBarrel extends BaseObject {
     tank: TankBody
-    constructor(gameApp: PIXI.Application, sprite: PIXI.Sprite, tank: TankBody) {
+    constructor(gameApp: GameApplication, sprite: PIXI.Sprite, tank: TankBody) {
         super(gameApp, sprite);
         this.tank = tank;
     }
@@ -15,7 +16,7 @@ export class TankBarrel extends BaseObject {
         this.scale(1 / 8);
         this.sprite.anchor.x = 0.5;
         this.sprite.anchor.y = 0.8;
-        this.gameApp.stage.addChild(this.sprite);
+        this.gameApp.app.stage.addChild(this.sprite);
     }
 
     rotate(from: PositionInterface, to: PositionInterface) {

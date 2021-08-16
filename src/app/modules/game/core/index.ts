@@ -4,9 +4,15 @@ import { GameResource, GameResourseInterface, loadResource } from './resource';
 import { Tank } from './objects';
 
 export class GameApplication {
+    debugger: {
+        [key: string]: any
+    } = {};
     app!: PIXI.Application;
     gameResource: GameResourseInterface;
     eventHandler: {
+        sharedTicker: {
+            [key: string]: () => any;
+        },
         click: {
             [key: string]: (e: MouseEvent) => any;
         },
@@ -20,11 +26,13 @@ export class GameApplication {
             [key: string]: (e: KeyboardEvent) => any;
         }
     } = {
+            sharedTicker: {},
             click: {},
             rightClick: {},
             keydownSpace: {},
             keydownS: {}
         }
+    tanks: Array<Tank> = [];
     constructor() {
         this.app = new PIXI.Application();
         this.app.renderer.resize(window.innerWidth, window.innerHeight);
@@ -32,6 +40,13 @@ export class GameApplication {
             this.app.renderer.resize(window.innerWidth, window.innerHeight);
         });
         this.loadResource();
+        this.app.ticker.add(() => {
+            Object.keys(this.eventHandler.sharedTicker).forEach(key => {
+                if (typeof this.eventHandler.sharedTicker[key] == 'function') {
+                    this.eventHandler.sharedTicker[key]();
+                }
+            });
+        });
         this.app.view.addEventListener('click', (e) => {
             Object.keys(this.eventHandler.click).forEach(key => {
                 if (typeof this.eventHandler.click[key] == 'function') {
@@ -70,19 +85,25 @@ export class GameApplication {
     async loadResource() {
         this.gameResource = await loadResource(this.app);
         const mainTank = new Tank(this, this.gameResource, true);
+        mainTank.type = 'ALLY';
         mainTank.init({
             x: mainTank.tankBody.sprite.width / 8,
             y: mainTank.tankBody.sprite.height / 8
         });
         mainTank.rotate({ x: 0, y: 0 }, { x: 1, y: 1 });
+        this.tanks.push(mainTank);
+        console.log(mainTank.tankBody.sprite.x, mainTank.tankBody.sprite.y);
+        console.log(mainTank.tankBody.sprite.getBounds().x, mainTank.tankBody.sprite.getBounds().y);
 
         const subTank = new Tank(this, this.gameResource, false);
+        subTank.type = 'ENEMY';
         subTank.init({
-            x: this.app.view.width - mainTank.tankBody.sprite.width / 8 - 100,
-            y: this.app.view.height - mainTank.tankBody.sprite.height / 8 - 100
+            x: this.app.view.width - mainTank.tankBody.sprite.width / 8 - 700,
+            y: this.app.view.height - mainTank.tankBody.sprite.height / 8 - 700
         });
-        subTank.rotate({ x: 0, y: 0 }, { x: -1, y: -1 });
+        subTank.rotate({ x: 0, y: 0 }, { x: 1, y: 1 });
         subTank.tint(0x097F8C);
+        this.tanks.push(subTank);
         // setInterval(() => {
         //     subTank.stop();
         //     const x = Math.random() * this.app.view.width - 30;

@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import { GameApplication } from '../..';
 import { BaseObject, PositionInterface } from '../base';
 import { TankBarrel } from './tank-barrel';
 import { TankBody } from './tank-body';
@@ -7,7 +8,7 @@ export class TankBlullet extends BaseObject {
     tankBody: TankBody;
     tankBarrel: TankBarrel;
     sprite: PIXI.AnimatedSprite;
-    constructor(gameApp: PIXI.Application, sprite: PIXI.AnimatedSprite, tankBody: TankBody, tankBarrel: TankBarrel) {
+    constructor(gameApp: GameApplication, sprite: PIXI.AnimatedSprite, tankBody: TankBody, tankBarrel: TankBarrel) {
         super(gameApp, sprite);
         this.tankBody = tankBody;
         this.tankBarrel = tankBarrel;
@@ -22,7 +23,7 @@ export class TankBlullet extends BaseObject {
         this.sprite.scale.x = 1 / 4;
         this.sprite.scale.y = 1 / 4;
         this.sprite.play();
-        this.gameApp.stage.addChild(this.sprite);
+        this.gameApp.app.stage.addChild(this.sprite);
     }
 
     move(from: PositionInterface, to: PositionInterface, speed: number) {

@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js';
 import { GameApplication } from '../..';
 import { GameResource, GameResourseInterface } from '../../resource';
-import { PositionInterface } from '../base';
+import { BaseObject, PositionInterface } from '../base';
 import { TankBarrel } from './tank-barrel';
 import { TankBlullet } from './tank-blullet';
 import { TankBody } from './tank-body';
@@ -9,37 +9,40 @@ import * as Utils from '../../utils';
 
 export class Tank {
     gameApp: GameApplication;
+    type: 'ALLY' | 'ENEMY';
     tankBody: TankBody;
     tankBarrel: TankBarrel;
-    tankBlullet: TankBlullet;
     shootSpeed: number = 500;
     blulletSpeed: number = 900;
     blulletRange: number = 500;
     acceptShoot = true;
     isMain: boolean;
-    eventUUID: string;
+    uuid: string;
+    tankBlullets: {
+        [key: string]: TankBlullet
+    } = {};
     constructor(gameApp: GameApplication, gameResource: GameResourseInterface, isMain: boolean = false) {
         this.gameApp = gameApp;
         this.isMain = isMain;
-        this.eventUUID = Utils.uuid(20);
-        this.tankBody = new TankBody(gameApp.app, new PIXI.Sprite(PIXI.Texture.from(GameResource.TANK_BODY)));
-        this.tankBarrel = new TankBarrel(gameApp.app, new PIXI.Sprite(PIXI.Texture.from(GameResource.TANK_BARREL)), this.tankBody);
+        this.uuid = `obj_${Utils.uuid(32)}`;
+        this.tankBody = new TankBody(gameApp, new PIXI.Sprite(PIXI.Texture.from(GameResource.TANK_BODY)));
+        this.tankBarrel = new TankBarrel(gameApp, new PIXI.Sprite(PIXI.Texture.from(GameResource.TANK_BARREL)), this.tankBody);
     }
 
     init(position: PositionInterface) {
         this.tankBody.init(position);
         this.tankBarrel.init(position);
         if (this.isMain) {
-            this.gameApp.eventHandler.click[this.eventUUID] = (e) => {
+            this.gameApp.eventHandler.click[this.uuid] = (e) => {
                 this.onViewClick(e);
             }
-            this.gameApp.eventHandler.rightClick[this.eventUUID] = (e) => {
+            this.gameApp.eventHandler.rightClick[this.uuid] = (e) => {
                 this.onViewRightClick(e);
             }
-            this.gameApp.eventHandler.keydownSpace[this.eventUUID] = (e) => {
+            this.gameApp.eventHandler.keydownSpace[this.uuid] = (e) => {
                 this.shoot();
             }
-            this.gameApp.eventHandler.keydownS[this.eventUUID] = (e) => {
+            this.gameApp.eventHandler.keydownS[this.uuid] = (e) => {
                 this.stop();
             }
         }
@@ -64,8 +67,10 @@ export class Tank {
         setTimeout(() => {
             this.acceptShoot = true;
         }, this.shootSpeed);
-        const tankBlullet = new TankBlullet(this.gameApp.app, new PIXI.AnimatedSprite(this.gameApp.gameResource.blullet), this.tankBody, this.tankBarrel);
+        const tankBlullet = new TankBlullet(this.gameApp, new PIXI.AnimatedSprite(this.gameApp.gameResource.blullet), this.tankBody, this.tankBarrel);
+        this.tankBlullets[tankBlullet.uuid] = tankBlullet;
         tankBlullet.stopCallback = () => {
+            delete this.gameApp.eventHandler.sharedTicker[this.uuid];
             tankBlullet.destroy();
         }
         const w = this.tankBarrel.sprite.height;
@@ -78,6 +83,18 @@ export class Tank {
             x: tankBlullet.sprite.x + Math.cos(this.tankBarrel.currentAngle) * this.blulletRange,
             y: tankBlullet.sprite.y + Math.sin(this.tankBarrel.currentAngle) * this.blulletRange
         }, this.blulletSpeed);
+
+        this.gameApp.eventHandler.sharedTicker[this.uuid] = () => {
+            const collision = this.collision(tankBlullet, this.gameApp.tanks.filter(tank => tank.type == 'ENEMY'));
+            if (collision.length) {
+                console.log('hitted');
+                delete this.gameApp.eventHandler.sharedTicker[this.uuid];
+                // tankBlullet.stop();
+                setTimeout(() => {
+                    tankBlullet.destroy();
+                }, 20)
+            }
+        }
     }
 
     move(to: PositionInterface) {
@@ -108,10 +125,17 @@ export class Tank {
         })
     }
 
+    collision(tankBlullet: TankBlullet, tanks: Array<Tank>) {
+        const tankBodys = tanks.map(tank => {
+            return tank.tankBody;
+        })
+        return tankBlullet.collision(tankBodys);
+    }
+
     destroy() {
-        delete this.gameApp.eventHandler.click[this.eventUUID];
-        delete this.gameApp.eventHandler.rightClick[this.eventUUID];
-        delete this.gameApp.eventHandler.keydownSpace[this.eventUUID];
-        delete this.gameApp.eventHandler.keydownS[this.eventUUID];
+        delete this.gameApp.eventHandler.click[this.uuid];
+        delete this.gameApp.eventHandler.rightClick[this.uuid];
+        delete this.gameApp.eventHandler.keydownSpace[this.uuid];
+        delete this.gameApp.eventHandler.keydownS[this.uuid];
     }
 }
