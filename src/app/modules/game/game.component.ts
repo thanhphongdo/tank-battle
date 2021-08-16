@@ -11,9 +11,9 @@ export class GameComponent implements OnInit, AfterViewInit {
   @ViewChild('game') game: ElementRef;
   gameApp: GameApplication;
 
-  get tank() {
-    return this.gameApp?.tank;
-  }
+  // get tank() {
+  //   return this.gameApp?.tank;
+  // }
 
   constructor() {
     this.gameApp = new GameApplication();

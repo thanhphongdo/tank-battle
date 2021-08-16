@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import * as Utils from '../utils';
 
 export interface PositionInterface {
     x: number;
@@ -9,17 +10,19 @@ export class BaseObject {
     gameApp: PIXI.Application
     sprite: PIXI.Sprite | PIXI.AnimatedSprite;
     ticker: PIXI.Ticker;
-    stop: boolean = true;
+    isStop: boolean = true;
     from: PositionInterface
     to: PositionInterface
     speed: number;
     autoChangeDirection: boolean = true;
     currentAngle: number = 0;
     stopCallback: Function;
+    eventUUID: string;
+    distanceDelta: number;
     constructor(gameApp: PIXI.Application, sprite: PIXI.Sprite) {
+        this.eventUUID = `e_${Utils.uuid(20)}`;
         this.gameApp = gameApp;
         this.sprite = sprite;
-        // this.ticker = PIXI.Ticker.shared;
         this.ticker = new PIXI.Ticker();
         this.from = this.position;
         this.to = this.position;
@@ -27,14 +30,10 @@ export class BaseObject {
         this.ticker.start();
         this.ticker.add(() => {
             this.changePosition();
-            if (this.distance(this.position, this.to) <= 2) {
+            if (this.distance(this.position, this.to) <= this.distanceDelta + 1) {
                 this.sprite.x = this.to.x;
                 this.sprite.y = this.to.y;
-                this.stop = true;
-                this.ticker.stop();
-                if (this.stopCallback) {
-                    this.stopCallback();
-                }
+                this.stop();
             }
         });
     }
@@ -96,14 +95,22 @@ export class BaseObject {
 
     move(from: PositionInterface, to: PositionInterface, speed: number) {
         this.ticker.start();
-        this.stop = false;
+        this.isStop = false;
         this.from = from;
         this.to = to;
         this.speed = speed;
     }
 
+    stop() {
+        this.isStop = true;
+        this.ticker.stop();
+        if (this.stopCallback) {
+            this.stopCallback();
+        }
+    }
+
     changePosition() {
-        if (this.stop) {
+        if (this.isStop) {
             return;
         }
         if (this.from.x == this.to.x && this.from.y == this.from.y) {
@@ -115,21 +122,21 @@ export class BaseObject {
             y: this.to.y - this.from.y
         }
 
-        this.currentAngle = this.vectorAngle(this.from, this.to);
+        const angle = this.vectorAngle(this.from, this.to);
         const distance = this.distance(this.from, this.to);
-        const vx = Math.cos(this.currentAngle) * this.speed / 60.0;
-        const vy = Math.sin(this.currentAngle) * this.speed / 60.0;
-        // this.rotate(angle + Math.PI / 2);
-        if (!this.stop) {
+        const dx = Math.cos(angle) * this.speed / 60.0;
+        const dy = Math.sin(angle) * this.speed / 60.0;
+        this.distanceDelta = Math.sqrt(dx * dx + dy * dy);
+        if (!this.isStop) {
             if (this.autoChangeDirection) {
-                this.sprite.rotation = this.currentAngle + Math.PI / 2;
+                this.sprite.rotation = angle + Math.PI / 2;
             }
-            this.sprite.x += vx;
-            this.sprite.y += vy;
+            this.sprite.x += dx;
+            this.sprite.y += dy;
         }
 
         return {
-            angle: this.currentAngle,
+            angle,
             distance
         }
     }

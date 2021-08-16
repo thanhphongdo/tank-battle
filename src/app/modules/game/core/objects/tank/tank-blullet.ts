@@ -27,8 +27,5 @@ export class TankBlullet extends BaseObject {
 
     move(from: PositionInterface, to: PositionInterface, speed: number) {
         super.move(from, to, speed);
-        if (this.stop) {
-            console.log('stop');
-        }
     }
 }
