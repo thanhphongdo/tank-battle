@@ -4,6 +4,7 @@ import { GameResource, GameResourseInterface } from '../../resource';
 import { BaseObject, PositionInterface } from '../base';
 import { TankBarrel } from './tank-barrel';
 import { TankBlullet } from './tank-blullet';
+import { TankMC } from './tank-mc';
 import { TankBody } from './tank-body';
 import * as Utils from '../../utils';
 
@@ -13,7 +14,7 @@ export class Tank {
     tankBody: TankBody;
     tankBarrel: TankBarrel;
     shootSpeed: number = 500;
-    blulletSpeed: number = 900;
+    blulletSpeed: number = 700;
     blulletRange: number = 500;
     acceptShoot = true;
     isMain: boolean;
@@ -46,6 +47,13 @@ export class Tank {
                 this.stop();
             }
         }
+        // const mc = new PIXI.AnimatedSprite(this.gameApp.gameResource.mc);
+        // mc.x = 400;
+        // mc.y = 400;
+        // mc.anchor.set(0.5);
+        // mc.scale.set(0.2);
+        // mc.gotoAndPlay(10);
+        // this.gameApp.app.stage.addChild(mc);
     }
 
     tint(color: number) {
@@ -85,14 +93,14 @@ export class Tank {
         }, this.blulletSpeed);
 
         this.gameApp.eventHandler.sharedTicker[this.uuid] = () => {
-            const collision = this.collision(tankBlullet, this.gameApp.tanks.filter(tank => tank.type == 'ENEMY'));
+            const collision = this.collision(tankBlullet, this.gameApp.tanks.filter(tank => tank.type == (this.type == 'ALLY' ? 'ENEMY' : 'ALLY')));
             if (collision.length) {
                 console.log('hitted');
+                const tankMc = new TankMC(this.gameApp, new PIXI.AnimatedSprite(this.gameApp.gameResource.mc), tankBlullet);
+                tankMc.init();
                 delete this.gameApp.eventHandler.sharedTicker[this.uuid];
                 // tankBlullet.stop();
-                setTimeout(() => {
-                    tankBlullet.destroy();
-                }, 20)
+                tankBlullet.destroy();
             }
         }
     }

@@ -105,16 +105,22 @@ export class GameApplication {
         subTank.tint(0x097F8C);
         this.tanks.push(subTank);
         // setInterval(() => {
+        //     mainTank.stop();
+        //     const mainX = Math.random() * this.app.view.width - 30;
+        //     const mainY = Math.random() * this.app.view.height - 30;
+        //     mainTank.move({ x: mainX, y: mainY });
+
         //     subTank.stop();
-        //     const x = Math.random() * this.app.view.width - 30;
-        //     const y = Math.random() * this.app.view.height - 30;
-        //     subTank.move({ x, y });
+        //     const subX = Math.random() * this.app.view.width - 30;
+        //     const subY = Math.random() * this.app.view.height - 30;
+        //     subTank.move({ x: subX, y: subY });
         // }, 3000);
 
         // setInterval(() => {
+        //     mainTank.shoot();
+        //     mainTank.tankBarrel.rotate(mainTank.tankBody.position, subTank.tankBody.position);
+
         //     subTank.shoot();
-        //     // const x = Math.random() * this.app.view.width - 30;
-        //     // const y = Math.random() * this.app.view.height - 30;
         //     subTank.tankBarrel.rotate(subTank.tankBody.position, mainTank.tankBody.position);
         // }, 700)
     }

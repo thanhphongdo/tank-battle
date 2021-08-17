@@ -5,13 +5,15 @@ const baseAssetsImages = 'assets/images';
 export interface GameResourseInterface {
     tankBody: PIXI.Sprite,
     tankBarrel: PIXI.Sprite,
-    blullet: Array<PIXI.Texture<PIXI.Resource>>
+    blullet: Array<PIXI.Texture<PIXI.Resource>>,
+    mc: Array<PIXI.Texture<PIXI.Resource>>
 }
 
 export enum GameResource {
     TANK_BODY = 'TANK_BODY',
     TANK_BARREL = 'TANK_BARREL',
-    BLULLET = 'BLULLET'
+    BLULLET = 'BLULLET',
+    MC = 'MC'
 }
 
 async function spriteLoader(gameApp: PIXI.Application, name: string, fileName: string): Promise<PIXI.Sprite> {
@@ -23,17 +25,14 @@ async function spriteLoader(gameApp: PIXI.Application, name: string, fileName: s
     })
 }
 
-async function animatedSpriteloader(gameApp: PIXI.Application, name: string, jsonName: string, imagePreName: string, numOfFrame: number): Promise<Array<PIXI.Texture<PIXI.Resource>>> {
+async function animatedSpriteloader(gameApp: PIXI.Application, name: string, jsonName: string, callback: Function): Promise<Array<PIXI.Texture<PIXI.Resource>>> {
     return new Promise((resolve, reject) => {
         gameApp.loader.add(name, `${baseAssetsImages}/${jsonName}`).load((loader, resources) => {
             const frames: Array<PIXI.Texture<PIXI.Resource>> = [];
 
-            for (let i = 0; i < numOfFrame; i++) {
-                frames.push(PIXI.Texture.from(`${baseAssetsImages}/${imagePreName}-${i}.png`));
-                // frames[i].baseTexture.resolution = 4;
+            if (callback) {
+                callback(frames);
             }
-
-            // const animatedSprite = new PIXI.AnimatedSprite(frames);
             resolve(frames);
         });
     })
@@ -43,7 +42,17 @@ async function loadResource(gameApp: PIXI.Application): Promise<GameResourseInte
     return {
         tankBody: await spriteLoader(gameApp, GameResource.TANK_BODY, 'tank-body.png'),
         tankBarrel: await spriteLoader(gameApp, GameResource.TANK_BARREL, 'tank-barrel.png'),
-        blullet: await animatedSpriteloader(gameApp, GameResource.BLULLET, 'blullet.json', 'blullet', 4)
+        blullet: await animatedSpriteloader(gameApp, GameResource.BLULLET, 'blullet.json', (frames: Array<any>) => {
+            for (let i = 0; i < 4; i++) {
+                frames.push(PIXI.Texture.from(`${baseAssetsImages}/blullet-${i}.png`));
+            }
+        }),
+        mc: await animatedSpriteloader(gameApp, GameResource.MC, 'mc.json', (frames: Array<any>) => {
+            for (let i = 0; i < 26; i++) {
+                const texture = PIXI.Texture.from(`Explosion_Sequence_A ${i + 1}.png`);
+                frames.push(texture);
+            }
+        }),
     }
 }
 
