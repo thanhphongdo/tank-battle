@@ -26,25 +26,37 @@ export class BaseObject {
         this.uuid = `obj_${Utils.uuid(32)}`;
         this.gameApp = gameApp;
         this.sprite = sprite;
-        this.ticker = new PIXI.Ticker();
+        // this.ticker = new PIXI.Ticker();
         this.from = this.position;
         this.to = this.position;
         this.speed = 100;
-        this.ticker.start();
-        this.ticker.add(() => {
-            this.changePosition();
-            if (this.distance(this.position, this.to) <= this.distanceDelta + 1) {
-                this.sprite.x = this.to.x;
-                this.sprite.y = this.to.y;
-                this.stop();
-            }
-        });
+        // this.ticker.start();
+        // this.ticker.add(() => {
+        //     this.changePosition();
+        //     if (this.distance(this.position, this.to) <= this.distanceDelta + 1) {
+        //         this.sprite.x = this.to.x;
+        //         this.sprite.y = this.to.y;
+        //         this.stop();
+        //     }
+        // });
+        this.addToMovementSharedTicker();
     }
 
     get position() {
         return {
             x: this.sprite.x,
             y: this.sprite.y
+        }
+    }
+
+    addToMovementSharedTicker() {
+        this.gameApp.eventHandler.sharedTicker[`move_${this.uuid}`] = () => {
+            this.changePosition();
+            if (this.distance(this.position, this.to) <= this.distanceDelta + 1) {
+                this.sprite.x = this.to.x;
+                this.sprite.y = this.to.y;
+                this.stop();
+            }
         }
     }
 
@@ -97,16 +109,18 @@ export class BaseObject {
     }
 
     move(from: PositionInterface, to: PositionInterface, speed: number) {
-        this.ticker.start();
+        // this.ticker.start();
         this.isStop = false;
         this.from = from;
         this.to = to;
         this.speed = speed;
+        this.addToMovementSharedTicker();
     }
 
     stop() {
         this.isStop = true;
-        this.ticker.stop();
+        // this.ticker.stop();
+        delete this.gameApp.eventHandler.sharedTicker[`move_${this.uuid}`];
         if (this.stopCallback) {
             this.stopCallback();
         }
@@ -152,7 +166,12 @@ export class BaseObject {
     }
 
     destroy() {
-        this.sprite.destroy();
-        this.ticker.destroy();
+        this.sprite.visible = false;
+        if (this.gameApp.eventHandler.sharedTicker[`move_${this.uuid}`]) {
+            delete this.gameApp.eventHandler.sharedTicker[`move_${this.uuid}`];
+        }
+        try {
+            this.sprite.destroy();
+        } catch (e) { }
     }
 }

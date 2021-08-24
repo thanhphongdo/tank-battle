@@ -78,7 +78,7 @@ export class Tank {
         const tankBlullet = new TankBlullet(this.gameApp, new PIXI.AnimatedSprite(this.gameApp.gameResource.blullet), this.tankBody, this.tankBarrel);
         this.tankBlullets[tankBlullet.uuid] = tankBlullet;
         tankBlullet.stopCallback = () => {
-            delete this.gameApp.eventHandler.sharedTicker[this.uuid];
+            delete this.gameApp.eventHandler.sharedTicker[this.uuid + tankBlullet.uuid];
             tankBlullet.destroy();
         }
         const w = this.tankBarrel.sprite.height;
@@ -92,14 +92,14 @@ export class Tank {
             y: tankBlullet.sprite.y + Math.sin(this.tankBarrel.currentAngle) * this.blulletRange
         }, this.blulletSpeed);
 
-        this.gameApp.eventHandler.sharedTicker[this.uuid] = () => {
+        this.gameApp.eventHandler.sharedTicker[this.uuid + tankBlullet.uuid] = () => {
             const collision = this.collision(tankBlullet, this.gameApp.tanks.filter(tank => tank.type == (this.type == 'ALLY' ? 'ENEMY' : 'ALLY')));
             if (collision.length) {
                 console.log('hitted');
                 const tankMc = new TankMC(this.gameApp, new PIXI.AnimatedSprite(this.gameApp.gameResource.mc), tankBlullet);
                 tankMc.init();
-                delete this.gameApp.eventHandler.sharedTicker[this.uuid];
-                // tankBlullet.stop();
+                delete this.gameApp.eventHandler.sharedTicker[this.uuid + tankBlullet.uuid];
+                tankBlullet.stop();
                 tankBlullet.destroy();
             }
         }

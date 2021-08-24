@@ -104,24 +104,24 @@ export class GameApplication {
         subTank.rotate({ x: 0, y: 0 }, { x: 1, y: 1 });
         subTank.tint(0x097F8C);
         this.tanks.push(subTank);
-        // setInterval(() => {
-        //     mainTank.stop();
-        //     const mainX = Math.random() * this.app.view.width - 30;
-        //     const mainY = Math.random() * this.app.view.height - 30;
-        //     mainTank.move({ x: mainX, y: mainY });
+        setInterval(() => {
+            mainTank.stop();
+            const mainX = Math.random() * this.app.view.width - 30;
+            const mainY = Math.random() * this.app.view.height - 30;
+            mainTank.move({ x: mainX, y: mainY });
 
-        //     subTank.stop();
-        //     const subX = Math.random() * this.app.view.width - 30;
-        //     const subY = Math.random() * this.app.view.height - 30;
-        //     subTank.move({ x: subX, y: subY });
-        // }, 3000);
+            subTank.stop();
+            const subX = Math.random() * this.app.view.width - 30;
+            const subY = Math.random() * this.app.view.height - 30;
+            subTank.move({ x: subX, y: subY });
+        }, 3000);
 
-        // setInterval(() => {
-        //     mainTank.shoot();
-        //     mainTank.tankBarrel.rotate(mainTank.tankBody.position, subTank.tankBody.position);
+        setInterval(() => {
+            mainTank.shoot();
+            mainTank.tankBarrel.rotate(mainTank.tankBody.position, subTank.tankBody.position);
 
-        //     subTank.shoot();
-        //     subTank.tankBarrel.rotate(subTank.tankBody.position, mainTank.tankBody.position);
-        // }, 700)
+            subTank.shoot();
+            subTank.tankBarrel.rotate(subTank.tankBody.position, mainTank.tankBody.position);
+        }, 700)
     }
 }
