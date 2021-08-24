@@ -1,5 +1,7 @@
 import { Component, ElementRef, OnInit, AfterViewInit, ViewChild } from '@angular/core';
-import { GameApplication } from './core';
+import 'phaser';
+// import { GameApplication } from './core';
+import { Game } from './core';
 
 @Component({
   selector: 'app-game',
@@ -9,14 +11,14 @@ import { GameApplication } from './core';
 export class GameComponent implements OnInit, AfterViewInit {
 
   @ViewChild('game') game: ElementRef;
-  gameApp: GameApplication;
+  gameApp: Phaser.Game;
 
   // get tank() {
   //   return this.gameApp?.tank;
   // }
 
   constructor() {
-    this.gameApp = new GameApplication();
+    // this.gameApp = new GameApplication();
   }
 
   ngOnInit(): void {
@@ -24,7 +26,7 @@ export class GameComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    this.game.nativeElement.appendChild(this.gameApp.app.view);
+    this.game.nativeElement.appendChild(Game.canvas);
   }
 
 }
