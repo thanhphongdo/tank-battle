@@ -7,6 +7,7 @@ import * as Utils from '../utils';
 
 export class Tank {
 
+    uuid: string;
     mainScene: MainScene;
     tankBody: BaseSprite;
     tankBarrel: BaseSprite;
@@ -17,12 +18,20 @@ export class Tank {
     distanceDelta: number;
     shootSpeed = 80;
     canShoot = true;
+    type: 'MAIN' | 'ALLY' | 'ENEMY';
     blullets: {
         [key: string]: Blullet;
     } = {};
 
-    constructor(mainScene: MainScene) {
+    static tanks: {
+        [key: string]: Tank
+    } = {};
+
+    constructor(mainScene: MainScene, type: 'MAIN' | 'ALLY' | 'ENEMY') {
+        this.uuid = Utils.uuid(32);
         this.mainScene = mainScene;
+        this.type = type;
+        Tank.tanks[this.uuid] = this;
     }
 
     init() {
@@ -33,8 +42,6 @@ export class Tank {
         this.tankBarrel.object.setScale(0.125);
         this.tankBarrel.object.setOrigin(0.5, 0.8);
 
-        this.setPosition(200, 200);
-
         this.mainScene.eventEmiter.on(this.mainScene.event.timeUpdate, ({ time, delta }) => {
             if (this.isStop) {
                 return;
@@ -42,44 +49,69 @@ export class Tank {
             this.move();
         });
 
-        this.mainScene.eventEmiter.on(this.mainScene.event.leftClick, (pos: PositionInterface) => {
-            this.setTankBarrelRotation(pos);
-        });
+        if (this.type == 'MAIN') {
+            this.mainScene.eventEmiter.on(this.mainScene.event.leftClick, (pos: PositionInterface) => {
+                this.setTankBarrelRotation(pos);
+            });
 
-        this.mainScene.eventEmiter.on(this.mainScene.event.rightClick, (pos: PositionInterface) => {
-            this.setTankBodyRotation(pos);
-            this.from = this.tankBody.position;
-            this.to = pos;
-            this.isStop = false;
-        });
+            this.mainScene.eventEmiter.on(this.mainScene.event.rightClick, (pos: PositionInterface) => {
+                this.setTankBodyRotation(pos);
+                this.from = this.tankBody.position;
+                this.to = pos;
+                this.isStop = false;
+            });
 
-        this.mainScene.eventEmiter.on(this.mainScene.event.sDown, () => {
-            this.isStop = true;
-        });
+            this.mainScene.eventEmiter.on(this.mainScene.event.sDown, () => {
+                this.isStop = true;
+            });
 
-        this.mainScene.eventEmiter.on(this.mainScene.event.spaceDown, () => {
-            if (!this.canShoot) {
-                return;
-            }
-            this.canShoot = false;
-            setTimeout(() => {
-                this.canShoot = true;
-            }, 60000 / this.shootSpeed);
-            this.shoot();
-        });
+            this.mainScene.eventEmiter.on(this.mainScene.event.spaceDown, () => {
+                if (!this.canShoot) {
+                    return;
+                }
+                this.canShoot = false;
+                setTimeout(() => {
+                    this.canShoot = true;
+                }, 60000 / this.shootSpeed);
+                this.shoot();
+            });
+        }
+        return this;
     }
 
     setPosition(x: number, y: number) {
         this.tankBody.setPosition(x, y);
         this.tankBarrel.setPosition(x, y);
+        return this;
     }
 
     setTankBodyRotation(toPos: PositionInterface) {
         this.tankBody.setRotation(Utils.vectorAngle(this.tankBody.position, toPos) + Math.PI / 2);
+        return this;
     }
 
     setTankBarrelRotation(toPos: PositionInterface) {
         this.tankBarrel.setRotation(Utils.vectorAngle(this.tankBody.position, toPos) + Math.PI / 2);
+        return this;
+    }
+
+    autoAction() {
+        setInterval(() => {
+            this.from = this.tankBody.position;
+            this.to = {
+                x: Math.floor(Math.random() * window.innerWidth),
+                y: Math.floor(Math.random() * window.innerHeight)
+            }
+            this.setTankBodyRotation(this.to);
+            this.isStop = false;
+        }, 3000);
+        setInterval(() => {
+            this.setTankBarrelRotation({
+                x: Math.floor(Math.random() * window.innerWidth),
+                y: Math.floor(Math.random() * window.innerHeight)
+            });
+            this.shoot();
+        }, 60000 / this.shootSpeed);
     }
 
     move() {
@@ -145,6 +177,7 @@ export class Blullet {
             }
             this.move();
         });
+        return this;
     }
 
     move() {
