@@ -38,8 +38,12 @@ function vectorAngle(from: PositionInterface, to: PositionInterface) {
     return angle;
 }
 
-function move(object: Phaser.GameObjects.Sprite, from: PositionInterface, to: PositionInterface, speed: number, isStop: boolean, callback?: Function) {
+function move(object: Phaser.Physics.Matter.Sprite, from: PositionInterface, to: PositionInterface, speed: number, isStop: boolean, callback?: Function) {
     if (isStop) {
+        return;
+    }
+    if (typeof object == 'undefined') {
+        isStop = true;
         return;
     }
     if (from.x == to.x && from.y == from.y) {
@@ -50,22 +54,26 @@ function move(object: Phaser.GameObjects.Sprite, from: PositionInterface, to: Po
     const dx = Math.cos(angle) * speed / 60.0;
     const dy = Math.sin(angle) * speed / 60.0;
     const distanceDelta = Math.sqrt(dx * dx + dy * dy);
-
-    if (distance({
-        x: object.x,
-        y: object.y
-    }, to) <= distanceDelta + 1) {
-        object.setPosition(to.x, to.y);
-        object.setPosition(to.x, to.y);
-        isStop = true;
-        if (callback) {
-            callback();
+    try {
+        if (distance({
+            x: object.x,
+            y: object.y
+        }, to) <= distanceDelta + 1) {
+            object.setPosition(to.x, to.y);
+            object.setPosition(to.x, to.y);
+            isStop = true;
+            if (callback) {
+                callback();
+            }
+            return;
         }
-        return;
-    }
 
-    object.x += dx;
-    object.y += dy;
+        object.x += dx;
+        object.y += dy;
+    }
+    catch (e) {
+        isStop = true;
+    }
 }
 
 export {

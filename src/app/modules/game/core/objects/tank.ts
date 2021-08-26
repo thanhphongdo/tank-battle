@@ -7,7 +7,7 @@ import * as Utils from '../utils';
 
 export class Tank {
 
-    uuid: string;
+    uuid: number;
     mainScene: MainScene;
     tankBody: BaseSprite;
     tankBarrel: BaseSprite;
@@ -18,7 +18,11 @@ export class Tank {
     distanceDelta: number;
     shootSpeed = 80;
     canShoot = true;
+    canSpeedUp = true;
+    speedUpTimeout = 15000;
     type: 'MAIN' | 'ALLY' | 'ENEMY';
+    blood: number = 1000;
+    dmg: number = 80;
     blullets: {
         [key: string]: Blullet;
     } = {};
@@ -35,12 +39,14 @@ export class Tank {
     }
 
     init() {
-        this.tankBody = new BaseSprite(this.mainScene.add.sprite(0, 0, GameResource.TANK_BODY));
+        this.tankBody = new BaseSprite(this.mainScene.matter.add.sprite(0, 0, GameResource.TANK_BODY, null, { isSensor: true }));
         this.tankBody.object.setScale(0.125);
+        this.tankBody.object.setCollisionGroup(this.uuid);
 
-        this.tankBarrel = new BaseSprite(this.mainScene.add.sprite(0, 0, GameResource.TANK_BARREL));
+        this.tankBarrel = new BaseSprite(this.mainScene.matter.add.sprite(0, 0, GameResource.TANK_BARREL, null, { isSensor: true }));
         this.tankBarrel.object.setScale(0.125);
         this.tankBarrel.object.setOrigin(0.5, 0.8);
+        this.tankBarrel.object.setCollisionGroup(this.uuid);
 
         this.mainScene.eventEmiter.on(this.mainScene.event.timeUpdate, ({ time, delta }) => {
             if (this.isStop) {
@@ -65,6 +71,20 @@ export class Tank {
                 this.isStop = true;
             });
 
+            this.mainScene.eventEmiter.on(this.mainScene.event.qDown, () => {
+                if (this.isStop) {
+                    return;
+                }
+                if (!this.canSpeedUp) {
+                    return;
+                }
+                this.canSpeedUp = false;
+                setTimeout(() => {
+                    this.canSpeedUp = true;
+                }, this.speedUpTimeout);
+                this.speedUp(this.speed + 50, 1000);
+            });
+
             this.mainScene.eventEmiter.on(this.mainScene.event.spaceDown, () => {
                 if (!this.canShoot) {
                     return;
@@ -74,6 +94,16 @@ export class Tank {
                     this.canShoot = true;
                 }, 60000 / this.shootSpeed);
                 this.shoot();
+            });
+            this.mainScene.eventEmiter.on(this.mainScene.event.rDown, () => {
+                // if (!this.canShoot) {
+                //     return;
+                // }
+                // this.canShoot = false;
+                // setTimeout(() => {
+                //     this.canShoot = true;
+                // }, 60000 / this.shootSpeed);
+                this.skillR();
             });
         }
         return this;
@@ -115,23 +145,58 @@ export class Tank {
     }
 
     move() {
-        Utils.move(this.tankBody.object, this.from, this.to, this.speed, this.isStop);
-        Utils.move(this.tankBarrel.object, this.from, this.to, this.speed, this.isStop);
+        Utils.move(this.tankBody.object as any, this.from, this.to, this.speed, this.isStop);
+        Utils.move(this.tankBarrel.object as any, this.from, this.to, this.speed, this.isStop);
     }
 
     shoot() {
-        const blullet = new Blullet(this.mainScene, this.tankBody, this.tankBarrel);
-        this.blullets[blullet.uuid] = blullet;
+        const blullet = new Blullet(this.mainScene, this);
+        blullet.dmg = this.dmg;
         blullet.stopCallback = () => {
-            blullet.sprite.destroy();
+            blullet.destroy();
             delete this.blullets[blullet.uuid];
         }
+        blullet.init();
+        this.blullets[blullet.uuid] = blullet;
+    }
+
+    speedUp(speed, time) {
+        const currentSpeed = this.speed;
+        this.speed += speed;
+        setTimeout(() => {
+            this.speed = currentSpeed;
+        }, time);
+    }
+
+    skillR() {
+        this.shoot();
+        setTimeout(() => {
+            this.shoot();
+        }, 100);
+        setTimeout(() => {
+            this.shoot();
+        }, 200);
+    }
+
+    isHitted(dmg: number) {
+        this.blood -= dmg;
+        if (this.blood <= 0) {
+            this.destroy();
+            console.log('destroy');
+        }
+    }
+
+    destroy() {
+        this.tankBody.destroy();
+        this.tankBarrel.destroy();
     }
 
 }
 
 export class Blullet {
+    // uuid: number;
     mainScene: MainScene;
+    tank: Tank;
     tankBody: BaseSprite;
     tankBarrel: BaseSprite;
     sprite: BaseSprite;
@@ -141,16 +206,18 @@ export class Blullet {
     distance: number = 700;
     isStop: boolean = false;
     stopCallback: Function;
+    dmg: number;
+    isDestroyed: boolean = false;
 
     get uuid() {
-        return this.sprite.uuid;
+        return this.tank.uuid + this.sprite.uuid;
     }
 
-    constructor(mainScene: MainScene, tankBody: BaseSprite, tankBarrel: BaseSprite) {
+    constructor(mainScene: MainScene, tank: Tank) {
         this.mainScene = mainScene;
-        this.tankBody = tankBody;
-        this.tankBarrel = tankBarrel;
-        this.init();
+        this.tank = tank;
+        this.tankBody = tank.tankBody;
+        this.tankBarrel = tank.tankBarrel;
     }
 
     init() {
@@ -163,9 +230,16 @@ export class Blullet {
         const w = this.tankBarrel.object.height * this.tankBarrel.object.scaleY * 0.8;
         const dx = w * Math.cos(this.tankBarrel.object.rotation - Math.PI / 2);
         const dy = w * Math.sin(this.tankBarrel.object.rotation - Math.PI / 2);
-        this.sprite = new BaseSprite(this.mainScene.add.sprite(this.tankBarrel.object.x + dx, this.tankBarrel.object.y + dy, GameResource.BLULLET).play(GameResource.BLULLET));
+        this.sprite = new BaseSprite(
+            this.mainScene.matter.add.sprite(
+                this.tankBarrel.object.x + dx,
+                this.tankBarrel.object.y + dy,
+                GameResource.BLULLET,
+                null,
+                { isSensor: true }).play(GameResource.BLULLET));
+        this.sprite.object.setCollisionGroup(this.uuid);
         this.sprite.object.setScale(0.25);
-        this.sprite.object.setRotation(this.tankBarrel.object.rotation - Math.PI / 2);
+        this.setRotation(this.tankBarrel.object.rotation - Math.PI / 2);
         this.from = this.sprite.position;
         this.to = {
             x: this.distance * Math.cos(this.tankBarrel.object.rotation - Math.PI / 2) + this.tankBarrel.object.x + dx,
@@ -177,10 +251,43 @@ export class Blullet {
             }
             this.move();
         });
+        const enemyTanks = Object.keys(Tank.tanks).map(key => {
+            if (Tank.tanks[key] && Tank.tanks[key].type == 'ENEMY') {
+                return Tank.tanks[key];
+            }
+            return null;
+        }).filter(tank => tank);
+
+        this.mainScene.eventEmiter.on(this.mainScene.event.collisionStart, ({ event, bodyA, bodyB }) => {
+            if (bodyA.collisionFilter.group == this.uuid || bodyB.collisionFilter.group == this.uuid) {
+                if (this.isDestroyed) {
+                    return;
+                }
+                const tankTarget = enemyTanks.find(tank => {
+                    return bodyA.collisionFilter.group == tank.uuid || bodyB.collisionFilter.group == tank.uuid;
+                });
+                if (tankTarget) {
+                    this.isStop = true;
+                    this.sprite.destroy();
+                    console.log('hit');
+                    tankTarget.isHitted(this.dmg);
+                }
+            }
+        });
+        return this;
+    }
+
+    setRotation(angle: number) {
+        this.sprite.object.setRotation(angle);
         return this;
     }
 
     move() {
-        Utils.move(this.sprite.object, this.from, this.to, this.speed, this.isStop, this.stopCallback);
+        Utils.move(this.sprite.object as any, this.from, this.to, this.speed, this.isStop, this.stopCallback);
+    }
+
+    destroy() {
+        this.sprite.destroy();
+        this.isDestroyed = true;
     }
 }

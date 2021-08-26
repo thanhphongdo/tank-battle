@@ -9,7 +9,10 @@ export class MainScene extends Phaser.Scene {
         rightClick: 'RIGHT_CICK',
         timeUpdate: 'TIME_UPDATE',
         spaceDown: 'SPACE_DOWN',
-        sDown: 'S_DOWN'
+        sDown: 'S_DOWN',
+        qDown: 'Q_DOWN',
+        rDown: 'R_DOWN',
+        collisionStart: 'COLLISION_START'
     }
     constructor() {
         super(MainScene.name);
@@ -22,7 +25,7 @@ export class MainScene extends Phaser.Scene {
     create() {
         this.eventEmiter = new Phaser.Events.EventEmitter();
         new Tank(this, 'MAIN').init().setPosition(100, 100);
-        new Tank(this, 'ENEMY').init().setPosition(400, 400).autoAction();
+        new Tank(this, 'ENEMY').init().setPosition(400, 400);
         this.input.mouse.disableContextMenu();
         this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
             if (pointer.rightButtonDown()) {
@@ -43,6 +46,15 @@ export class MainScene extends Phaser.Scene {
         this.input.keyboard.addKey('S').on('down', (event) => {
             this.eventEmiter.emit(this.event.sDown);
         });
+        this.input.keyboard.addKey('Q').on('down', (event) => {
+            this.eventEmiter.emit(this.event.qDown);
+        });
+        this.input.keyboard.addKey('R').on('down', (event) => {
+            this.eventEmiter.emit(this.event.rDown);
+        });
+        const collision = this.matter.world.on('collisionstart', (event, bodyA, bodyB) => {
+            this.eventEmiter.emit(this.event.collisionStart, { event, bodyA, bodyB });
+        });
     }
 
     update(time: number, delta: number) {
@@ -55,6 +67,21 @@ const config: Phaser.Types.Core.GameConfig = {
     // backgroundColor: '#125555',
     width: window.innerWidth,
     height: window.innerHeight,
+    physics: {
+        default: 'matter',
+        matter: {
+            debug: true,
+            gravity: {
+                y: 0
+            },
+        },
+        arcade: {
+            debug: true,
+            gravity: {
+                y: 0
+            },
+        }
+    },
     fps: {
         target: 60
     },
@@ -62,7 +89,3 @@ const config: Phaser.Types.Core.GameConfig = {
 };
 
 export const Game = new Phaser.Game(config);
-
-// Game.canvas.addEventListener('click', ()=>{
-//     Game.scene.emi
-// });
