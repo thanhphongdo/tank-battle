@@ -20,21 +20,24 @@ export class Tank {
     canShoot = true;
     canSpeedUp = true;
     speedUpTimeout = 15000;
-    type: 'MAIN' | 'ALLY' | 'ENEMY';
+    type: 'ALLY' | 'ENEMY';
     blood: number = 1000;
     dmg: number = 80;
+    isMain: boolean = false;
+    isDestroyed: boolean = false;
     blullets: {
         [key: string]: Blullet;
     } = {};
 
     static tanks: {
-        [key: string]: Tank
+        [key: string]: Tank;
     } = {};
 
-    constructor(mainScene: MainScene, type: 'MAIN' | 'ALLY' | 'ENEMY') {
+    constructor(mainScene: MainScene, type: 'ALLY' | 'ENEMY', isMain: boolean = false) {
         this.uuid = Utils.uuid(32);
         this.mainScene = mainScene;
         this.type = type;
+        this.isMain = isMain;
         Tank.tanks[this.uuid] = this;
     }
 
@@ -55,7 +58,7 @@ export class Tank {
             this.move();
         });
 
-        if (this.type == 'MAIN') {
+        if (this.isMain) {
             this.mainScene.eventEmiter.on(this.mainScene.event.leftClick, (pos: PositionInterface) => {
                 this.setTankBarrelRotation(pos);
             });
@@ -126,7 +129,24 @@ export class Tank {
     }
 
     autoAction() {
-        setInterval(() => {
+        const enemyTanks = Object.keys(Tank.tanks).map(key => {
+            if (Tank.tanks[key] && Tank.tanks[key].type != this.type) {
+                return Tank.tanks[key];
+            }
+            return null;
+        }).filter(tank => tank);
+        if (!enemyTanks.length) {
+            return;
+        }
+        const moveTimer = setInterval(() => {
+            if (enemyTanks[0].isDestroyed) {
+                clearInterval(moveTimer);
+                return;
+            }
+            if (this.isDestroyed) {
+                clearInterval(moveTimer);
+                return;
+            }
             this.from = this.tankBody.position;
             this.to = {
                 x: Math.floor(Math.random() * window.innerWidth),
@@ -135,10 +155,18 @@ export class Tank {
             this.setTankBodyRotation(this.to);
             this.isStop = false;
         }, 3000);
-        setInterval(() => {
+        const shootTimer = setInterval(() => {
+            if (enemyTanks[0].isDestroyed) {
+                clearInterval(shootTimer);
+                return;
+            }
+            if (this.isDestroyed) {
+                clearInterval(shootTimer);
+                return;
+            }
             this.setTankBarrelRotation({
-                x: Math.floor(Math.random() * window.innerWidth),
-                y: Math.floor(Math.random() * window.innerHeight)
+                x: enemyTanks[0].tankBody.object.x,
+                y: enemyTanks[0].tankBody.object.y
             });
             this.shoot();
         }, 60000 / this.shootSpeed);
@@ -189,6 +217,7 @@ export class Tank {
     destroy() {
         this.tankBody.destroy();
         this.tankBarrel.destroy();
+        this.isDestroyed = true;
     }
 
 }
@@ -252,7 +281,7 @@ export class Blullet {
             this.move();
         });
         const enemyTanks = Object.keys(Tank.tanks).map(key => {
-            if (Tank.tanks[key] && Tank.tanks[key].type == 'ENEMY') {
+            if (Tank.tanks[key] && Tank.tanks[key].type != this.tank.type) {
                 return Tank.tanks[key];
             }
             return null;
@@ -267,6 +296,25 @@ export class Blullet {
                     return bodyA.collisionFilter.group == tank.uuid || bodyB.collisionFilter.group == tank.uuid;
                 });
                 if (tankTarget) {
+                    const config = {
+                        key: GameResource.EXPLOSION,
+                        frames: GameResource.EXPLOSION,
+                        frameRate: 30,
+                        repeat: -1,
+                        repeatDelay: 0
+                    };
+                    this.mainScene.anims.create(config);
+                    let explosion = this.mainScene.add.sprite(this.sprite.object.x, this.sprite.object.y, GameResource.EXPLOSION, 23);
+                    explosion.setScale(0.5);
+                    explosion.play({
+                        key: GameResource.EXPLOSION,
+                        delay: 0
+                    });
+
+                    setTimeout(() => {
+                        explosion.destroy();
+                    }, 300);
+
                     this.isStop = true;
                     this.sprite.destroy();
                     console.log('hit');

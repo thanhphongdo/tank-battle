@@ -24,8 +24,8 @@ export class MainScene extends Phaser.Scene {
 
     create() {
         this.eventEmiter = new Phaser.Events.EventEmitter();
-        new Tank(this, 'MAIN').init().setPosition(100, 100);
-        new Tank(this, 'ENEMY').init().setPosition(400, 400);
+        new Tank(this, 'ALLY', true).init().setPosition(100, 100).autoAction();
+        new Tank(this, 'ENEMY').init().setPosition(400, 400).autoAction();
         this.input.mouse.disableContextMenu();
         this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
             if (pointer.rightButtonDown()) {
